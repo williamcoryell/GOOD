@@ -1,48 +1,18 @@
 from flask import Flask, render_template, request # type: ignore
-from bs4 import BeautifulSoup
-import requests
-import os
-import base64
-from gnews import GNews
+from GoogleNews import GoogleNews
 from newspaper import Article
-
+import pandas as pd
 
 def get_urls(topic):
-    # for url in soup.find_all('a',  attrs={'href': re.compile("^https://")}): 
-    # print(url.get('href'))   
-    news = GNews()
-
-    rawUrls = news.get_news(topic)
-
-    urls = []
-    
-    for rawUrl in rawUrls:
-        b64s = rawUrl['url'][rawUrl['url'].find("articles/")+9:rawUrl['url'].find("?")]
-        print(b64s)
-        urls.append(rawUrl['url'])
-        
-    return urls
+    googlenews=GoogleNews()
+    googlenews.search(topic)
+    result=googlenews.result()
+    df=pd.DataFrame(result)
+    return [df["link"][i] for i in range(10)]
 
 def get_article_content(url):
-    # headers = {'User-Agent':'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/74.0.3729.169 Safari/537.36'}
-    # response = requests.get(url, headers=headers)
-    # return response.text
-    # if response.status_code == 200:
-    #     soup = BeautifulSoup(response.content, 'html.parser')
-    #     article_content = soup.find_all('p')
-    #     article_text = ' '.join([para.get_text() for para in article_content])
-    #     return article_text
-    # else:
-    #     return f"Failed to retrieve the article. Status code: {response.status_code}"
-    # article = Article(url, language="en")
-    # article = Article(url)
-    # article.download()
-    # article.parse()
-    # print(article.text)
-    # return article.text
-    article = GNews().get_full_article(url)
-    return article
-    
+    article = Article(url)
+    return article.text
 
 app = Flask(__name__)
 
