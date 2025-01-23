@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Graph Example</title>
+    <!-- Chart.js Library -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        article {
+            display: flex;
+            margin: auto;
+            width: 50%;
+            padding: 10px;
+            float: center;
+            text-align: center;
+            text-align-last: center;
+            background-color: powderblue;
+        }
+
+    </style>
+</head>
+<body>
+    <div style="width: 50%; margin: auto;">
+        <canvas id="myChart" width="400" height="200"></canvas>
+    </div>
+    
+    <script>
+        // Example data for URLs (you need to replace this with actual data)
+        var urls = {{ urls | tojson | safe }};
+        var topic = "{{specificTopic}}";
+
+        // Generate random scatter plot data
+        var negativeData = [];
+        var positiveData = [];
+        for (let i = 0; i < urls.length; i++) {
+            confidenceScore = Math.random() * 2 -1
+            if (confidenceScore < 0){
+                negativeData.push({x:confidenceScore, y: 0})
+            }
+            else{
+                positiveData.push({x:confidenceScore, y: 0})
+            }
+            
+        }
+
+        var ctx = document.getElementById('myChart').getContext('2d');
+        var myChart = new Chart(ctx, {
+            type: 'scatter',
+            data: {
+                datasets: [{
+                    label: 'Negative',
+                    data: negativeData,
+                    backgroundColor: function(context) {
+                        let value = context.raw.x;
+                        return value < 0 ? 'rgba(255, 99, 132, 0.8)' : 'rgba(75, 192, 192, 0.8)';
+                        value = -value
+                    },
+                    pointRadius: 8,  // Adjust point size
+                    pointHoverRadius: 10,
+                },{
+                    label: 'Positive',
+                    data: positiveData,
+                    backgroundColor: function(context) {
+                        let value = context.raw.x;
+                        return value < 0 ? 'rgba(255, 99, 132, 0.8)' : 'rgba(75, 192, 192, 0.8)';
+                    },
+                    pointRadius: 8,  // Adjust point size
+                    pointHoverRadius: 10,
+                    yAxisId: 'percentage'
+                }]
+            }, 
+            options: {
+                scales: {
+                    x: {
+                        type: 'linear',
+                        position: 'bottom',
+                        min: -1,  
+                        max: 1,   
+                        ticks: {
+                            callback: function(value, index, values) {
+                                if (value === -1) return '1';
+                                if (value === 0) return '0';
+                                if (value === 1) return '1';
+                                return '';
+                            },
+                            stepSize: 0.5
+                        },
+                        title: {
+                            display: true,
+                            text: 'Confidence Score',
+                            font: {
+                                size: 16
+                            }
+                        }
+                    },
+                    y: {  // Hide Y-axis
+                        ticks: { display: false, stepSize: 4},
+                        title: {
+                            display: true,
+                            text: 'Negative'
+                        }
+                    }, 
+                    percentage:{
+                        position: 'right',
+                        ticks: { display: false, stepSize: 4},
+                        title: {
+                            display: true,
+                            text: 'Positive'
+                        }
+                    }
+                },
+                responsive: true,
+                plugins: {
+                    legend: { 
+                        display: true,
+                        position: 'top'
+                        
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                return 'Confidence Score: ' + Math.abs(context.raw.x.toFixed(2));
+                            }
+                        }
+                    }
+                    
+                }
+            }
+        });
+    </script>
+
+    <br>
+    
+    <article>
+        <p>
+        Text that explains the axes and graph in general and also sentiment stuff blah blah.
+        </p>
+    </article>
+  
+</body>
+</html>

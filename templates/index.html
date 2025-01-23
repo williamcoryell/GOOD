@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GOOD Detector</title>
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            background-color: rgba(70, 90, 96, 0.489);
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+            margin: 0;
+            padding: 0;
+        }
+
+        .titleDiv {
+            text-align: center;
+            font-weight: bold;
+            margin: auto;
+            max-width: 500px;
+            color: rgb(23, 23, 23);
+        }
+
+        .normalText {
+            margin: auto;
+            font-size: large;
+            color: black;
+            text-align: center;
+        }
+
+        .smallText {
+            font-size: small;
+            text-align: center;
+            color: black;
+        }
+
+        .center {
+            text-align: center;
+        }
+
+        .border {
+            margin: auto;
+            text-align: center;
+            width: 100%;
+            border: 3px solid #000;
+            padding: 10px;
+        }
+
+        .box {
+            display: flex;
+            width: 100%;
+            padding: 50px;
+            float: left;
+        }
+
+        input[type=submit] {
+            background-color: rgb(213, 215, 227);
+            border: none;
+            color: black;
+            padding: 8px 16px;
+            cursor: pointer;
+        }
+
+        input[type=submit]:hover {
+            background-color: rgb(153, 153, 153);
+        }
+    </style>
+</head>
+<body>
+    <div class="titleDiv">
+        <h1>GOOD Detector</h1>
+    </div>
+
+    {% if og %}
+    <div class="center">
+        <form method="POST">
+            <label for="topic" class="normalText">Enter Topic:</label><br>
+            <input type="text" id="topic" name="topic" required><br><br>
+
+            <label for="source" class="normalText">Select Source:</label><br>
+            <select id="source" name="source" required>
+                <option value="news">News</option>
+                <option value="twitter">Twitter</option>
+            </select><br><br>
+
+            <input type="submit" value="Submit">
+        </form>
+    </div>
+    {% endif %}
+
+    {% if go %}
+    <div class="center">
+        <br>
+        <span class="normalText">Topic: {{ topic }}</span><br><br>
+
+        <form action="/sent" method="POST">
+            <input type="submit" value="See the general online opinion">
+        </form><br>
+
+        <form action="/graph" method="POST">
+            <input type="submit" value="See the general online opinion graph">
+        </form><br>
+
+        <span class="normalText">URLs for articles or tweets we're using:</span>
+    </div>
+
+    {% for url in urls %}
+    <div class="center">
+        <div class="border">
+            <br>
+            <p>
+                <a href="{{url}}" style = "color:#FFFFFF">{{url}}</a>.
+            </p>
+            <form action="/urlInfo" method="POST">
+                <input type="hidden" name="topicChose" value="{{ url }}">
+                <input type="submit" value="See Content">
+            </form>
+            <br>
+        </div>
+    </div>
+    {% endfor %}
+    {% endif %}
+
+    {% if specificTopic %}
+    <div class="center">
+        <br>
+        <span class="normalText">Content for: {{ specificTopic }}</span><br>
+        <span class="smallText">{{ topicText }}</span>
+    </div>
+    {% endif %}
+
+    <script>
+        // Function to generate a random hex color
+        function generateRandomColor() {
+            const letters = '0123456789ABCDEF';
+            let color = '#';
+            for (let i = 0; i < 6; i++) {
+                color += letters[Math.floor(Math.random() * 16)];
+            }
+            return color;
+        }
+
+        // Apply random colors to each border
+        document.querySelectorAll('.border').forEach((border) => {
+            border.style.backgroundColor = generateRandomColor();
+        });
+    </script>
+</body>
+</html>
