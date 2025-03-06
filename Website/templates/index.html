@@ -1,88 +1,152 @@
 <!DOCTYPE html>
-<html>
-    <head>
-        <title>GOOD Detector</title>
-        <meta charset="utf-8"/>
-        <style>
-            input[type=submit]
-            {
-                background-color: rgb(213, 215, 227);
-                border: none;
-                color: black;
-                padding: 8px 16px;
-                margin: 2px 1px;
-            }
-            input[type=submit]:hover
-            {
-                background-color: rgb(153, 153, 153);
-                border: none;
-                color: black;
-                padding: 8px 16px;
-                margin: 2px 1px;
-                cursor: pointer;
-            }
-            .titleDiv{
-                font-weight: bold;
-                font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
-                margin:auto;
-                width: 100px;
-                font-size: xx-large;
-                color:rgb(23, 23, 23);
-            }
-            .normalText
-            {
-                font-size: large;
-                color: black;
-                font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
-            }
-            .smallText
-            {
-                font-size: small;
-                color: black;
-                font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
-            }
-            body{
-                background-color:rgb(233, 236, 255);
-            }
-        </style>
-    </head>
-    <body>
-        <span class = "titleDiv">GOOD Detector</span>
-        {%if og%}
-        <form METHOD="POST">
-            <label for="topic" class="normalText">Topic:</label>
-            <br>
-            <input type="text" id="topic" name="topic">
-            <br>
-            <input type="submit" name = "submit">
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GOOD Detector</title>
+    <style>
+        body {
+            font-family: 'Times New Roman', Times, serif;
+            text-align: center;
+            background-color: rgba(41, 170, 209, 0.168);
+        }
+        .loading {
+            font-family: 'Times New Roman', Times, serif;
+            font-size: 18px;
+            color: red;
+            display: none;
+        }
+        .border {
+            font-family: 'Times New Roman', Times, serif;
+            display: none;
+            margin: auto;
+            padding: 10px;
+            border: 2px solid black;
+            background-color: lightgray;
+            transition: opacity 0.5s;
+        }
+        .button-container {
+            margin-top: 20px;
+            display: none; /* Initially hidden */
+        }
+        .normalText {
+            margin: auto;
+            font-family: 'Times New Roman', Times, serif;
+            font-size: large;
+            color: black;
+            text-align: center;
+        }
+
+        .smallText {
+            font-size: small;
+            font-family: 'Times New Roman', Times, serif;
+            text-align: center;
+            color: black;
+        }
+    </style>
+</head>
+<body>
+    <h1>GOOD Detector</h1>
+
+    <form id="searchForm">
+        <label>Enter Topic:</label>
+        <input type="text" id="topic" name="topic" required>
+        <br><br>
+        <label>Select Source:</label>
+        <select id="source" name="source">
+            <option value="news">News</option>
+            <option value="twitter">Twitter</option>
+        </select>
+        <br><br>
+        <input type="submit" value="Submit">
+    </form>
+
+    <p class="loading">Fetching articles... Please wait.</p>
+
+    <div class="button-container" id="buttonContainer">
+        <form action="/graph" method="POST">
+            <input type="submit" value="Show Graph">
         </form>
-        {%endif%}
-        {%if go%}
-        <br>
-        <span class = "normalText">Topic: {{topic}}</span>
-        <br>
-        <form action="/sent" METHOD = "POST">
-            <input type="submit" value="See the general online opinion"></input>
+    <br>
+        <form action="/sent" method="POST">
+            <input type="submit" value="Show Opinion">
         </form>
-        <br>
-        <br>
-        <span class = "normalText">urls for articles we're using:</span>
-        {%for url in urls%}
-        <br>
-        <a class = "smallText" href="{{url}}">{{url}}</a>
-        <form action="/urlInfo" METHOD="POST">
-            <input type="hidden" id="topicChose" name="topicChose" value="{{url}}">
-            <input type="submit" value = "See Article Text">
-            <br>
-            <br>
-        </form>
-        {%endfor%}
-        {%endif%}
-        {%if specificTopic%}
-        <br>
-        <span class = "normalText">{{specificTopic}}:</span>
-        <br>
-        <span class = "smallText">{{topicText}}</span>
-        {%endif%}
-    </body>
+    </div>
+
+    <br>
+    <div id="results"></div>
+
+    <!-- Graph and Sentiment Analysis Buttons (Initially Hidden) -->
+    
+
+    <script>
+        function generateRandomColor() {
+            const letters = '0123456789ABCDEF';
+            let color = '#';
+            for (let i = 0; i < 6; i++) {
+                color += letters[Math.floor(Math.random() * 16)];
+            }
+            return color;
+        }
+
+        document.getElementById('searchForm').addEventListener('submit', function(event) {
+            event.preventDefault();
+
+            let topic = document.getElementById('topic').value;
+            let source = document.getElementById('source').value;
+            document.querySelector('.loading').style.display = 'block';
+
+            fetch('/get_urls', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ topic: topic, source: source })
+            })
+            .then(response => response.json())
+            .then(data => {
+                document.querySelector('.loading').style.display = 'none';
+                let resultsDiv = document.getElementById('results');
+                resultsDiv.innerHTML = '';
+
+                if (data.urls.length === 0) {
+                    resultsDiv.innerHTML = '<p>No results found.</p>';
+                    return;
+                }
+
+                data.urls.forEach((url, index) => {
+                    setTimeout(() => {
+                        let div = document.createElement('div');
+                        div.classList.add('border');
+                        div.innerHTML = `
+                            <p><a href="${url}" target="_blank">${url}</a></p>
+                            <form action="/urlInfo" method="POST">
+                                <input type="hidden" name="topicChose" value="${url}">
+                                <input type="submit" value="See Content">
+                            </form>
+                        `;
+                        resultsDiv.appendChild(div);
+                        div.style.display = "block";
+                        div.style.opacity = "0";
+                        setTimeout(() => {
+                            div.style.opacity = "1";
+                            div.style.backgroundColor = generateRandomColor();
+                        }, 10);
+                    }, 0);
+                });
+
+                // Show the buttons after URLs load
+                setTimeout(() => {
+                    document.getElementById('buttonContainer').style.display = 'block';
+                }, 0);
+            });
+        });
+    </script>
+
+    {% if specificTopic %}
+    <span class="normalText">Content from: {{ specificTopic }}</span>
+    <br>
+    <br>
+    <span class="smallText">{{ topicText }}</span>
+    {% endif %}
+
+</body>
 </html>
