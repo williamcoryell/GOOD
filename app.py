@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request  # type: ignore
+from flask import Flask, render_template, request, jsonify  # type: ignore
 import os
 from GoogleNews import GoogleNews
 from newspaper import Article
@@ -9,12 +9,21 @@ import numpy as np
 import matplotlib.pyplot as plt
 import asyncio
 from twikit import Client
+import random
+import main as tspmo
+global id2label
+global label2id
+id2label = {0: "negative", 1: "positive"}
+label2id = {"negative": 0, "positive": 1}
+
 
 USERNAME = 'mickey76148'
 PASSWORD = 'twitterScrapingTool'
 
+
 topicCHOSEN = ""
 URLS = []
+quickDict  = {}
 
 def get_urls_news(topic):
     global quickDict
@@ -39,8 +48,9 @@ def get_urls_news(topic):
                 quickDict[url] = article.text
                 if url is not None:
                     retLst.append(url)
+                    print(url)
             except:
-                print(url)
+                article
     print(time.time() - start_time)
     return retLst
 
@@ -86,6 +96,23 @@ def text():
     URLS = urls
     return render_template("index.html", topic=topic, go=True, urls=urls, source=source)
 
+@app.route('/get_urls', methods=['POST'])
+def fetch_urls():
+    global quickDict
+    global URLS
+    topic = request.json['topic']
+    source = request.json['source']
+    
+    if source == "news":
+        urls = get_urls_news(topic)
+    elif source == "twitter":
+        urls = asyncio.run(get_urls_twitter(topic))
+    else:
+        urls = []
+
+    URLS = urls
+    return jsonify({"urls": urls})  # Send URLs as JSON
+
 @app.route('/urlInfo', methods=['POST'])
 def topic():
     topic = request.form['topicChose']
@@ -100,7 +127,36 @@ def graph():
 
 @app.route('/sent', methods=['POST'])
 def sentiment():
-    return render_template("sent.html")
+    global URLS, topicCHOSEN, quickDict
+    urls = URLS
+    topic = topicCHOSEN
+    Model = tspmo.DeBERTa("checkpoint.config")
+    random.shuffle(urls)
+    for i in urls:
+        artCont = quickDict[i]
+        para = artCont.split("\n")
+        score = 0
+        addString = ""
+        for j in para:
+            retStr = j
+            if addString:
+                retStr = addString + " " + retStr
+
+            if len(retStr) < len(topic):
+                continue
+            if len(retStr) < 500:
+                addString += retStr
+
+            if topic.lower() not in retStr.lower():
+                continue
+
+            guess = Model.predict(retStr, topic)["totalScore"]
+            score += guess
+        score /= len(para)
+        print(i)
+        print(Model.predict(artCont, topic))
+        exit()
+    return render_template("sent.html", urls = urls)
 
 if __name__ == "__main__":
     app.run(host='0.0.0.0', port=80, debug=True)
