@@ -15,6 +15,8 @@ global id2label
 global label2id
 id2label = {0: "negative", 1: "positive"}
 label2id = {"negative": 0, "positive": 1}
+global Model
+Model = tspmo.DeBERTa("checkpoint.config")
 
 
 USERNAME = 'mickey76148'
@@ -39,7 +41,7 @@ def get_urls_news(topic):
     for df in lstOfdf:
         for i in range(len(df["link"])):
             url = df["link"][i][:df["link"][i].rfind("&ved=")] + "/"
-            if url is None or url in retLst:
+            if url is None or url in retLst or "nytime" in url:
                 continue
             article = Article(url)
             try:
@@ -117,7 +119,8 @@ def fetch_urls():
 def topic():
     topic = request.form['topicChose']
     texter = get_article_content(topic)
-    return render_template("index.html", specificTopic=topic, topicText=texter)
+    sent= sentOneArt(texter, topic)
+    return render_template("urlinfo.html", specificTopic=topic, topicText=texter, sent=sent)
 
 @app.route('/graph', methods=['POST'])
 def graph():
@@ -125,40 +128,59 @@ def graph():
     print(URLS)
     return render_template('graph.html', urls = URLS, specificTopic=topicCHOSEN)
 
+def sentOneArt(text, topic):
+    artCont = text
+    print(artCont)
+    para = artCont.split("\n")
+    score = 0
+    addString = ""
+    scoringPara = 0
+    
+    for j in para:
+        # print(addString)
+        # print("-------")
+        retStr = j
+        # print(f"addString: {addString}")
+        # print(f"retStr: {retStr}")
+
+        if len(addString + retStr) < 250:
+            addString += " " + retStr
+            continue
+
+        if addString:
+            retStr = addString + " " + retStr
+
+        # print(len(retStr))
+
+        addString = ""
+        guess = Model.predict(retStr, topic)["totalScore"]
+        print(len(retStr))
+        print(retStr)
+        print(guess)
+        if abs(guess) > 0.13:
+            score += guess
+            scoringPara += 1
+    if addString:
+        retStr = addString + " " + retStr
+        guess = Model.predict(retStr, topic)["totalScore"]
+        print(len(retStr))
+        print(retStr)
+        print(guess)
+        if abs(guess) > 0.13:
+            score += guess
+            scoringPara += 1
+    score /= scoringPara
+    return score
+
+
 @app.route('/sent', methods=['POST'])
 def sentiment():
     global URLS, topicCHOSEN, quickDict
     urls = URLS
     topic = topicCHOSEN
-    Model = tspmo.DeBERTa("checkpoint.config")
-    random.shuffle(urls)
     for i in urls:
-        artCont = quickDict[i]
-        para = artCont.split("\n")
-        score = 0
-        addString = ""
-        for j in para:
-            retStr = j
-            if addString:
-                retStr = addString + " " + retStr
-
-            if len(retStr) < len(topic):
-                continue
-            if len(retStr) < 500:
-                addString += retStr
-
-            if topic.lower() not in retStr.lower():
-                continue
-
-            guess = Model.predict(retStr, topic)["totalScore"]
-            score += guess
-        score /= len(para)
-        print(i)
-        print(Model.predict(artCont, topic))
-        exit()
+        print(sentOneArt(quickDict[i], topic))
     return render_template("sent.html", urls = urls)
 
 if __name__ == "__main__":
-    app.run(host='0.0.0.0', port=80, debug=True)
-    
-
+    app.run(host='0.0.0.0', port=80)
