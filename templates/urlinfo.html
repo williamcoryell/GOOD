@@ -4,11 +4,13 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>GOOD Detector</title>
+    <link rel="stylesheet" href="https://www.w3schools.com/w3css/4/w3.css">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Inconsolata">
     <style>
         body {
             font-family: 'Times New Roman', Times, serif;
             text-align: center;
-            background-color: rgba(41, 170, 209, 0.168);
+            background-color: rgba(196, 196, 196, 0.168);
         }
         .loading {
             font-family: 'Times New Roman', Times, serif;
@@ -46,13 +48,33 @@
     </style>
 </head>
 <body>
-    <h1>GOOD Detector</h1>
+    <div class ='w3-row'>
+        <div class = "w3-col s3">
+            <a href = "/" class = "w3-block w3-sans-serif w3-button w3-hover-opacity">home</a>
+        </div>
+        <div class = "w3-col s3">
+            <a href = "/long" class = "w3-block w3-sans-serif w3-button w3-hover-opacity">data tracker</a>
+        </div>
+        <div class = "w3-col s3">
+            <a href = "/github"class = "w3-block w3-sans-serif w3-button w3-hover-opacity">github</a>
+        </div>
+        <div class="w3-col s3">
+            <a href="#about" class="w3-block w3-sans-serif w3-button w3-hover-opacity">about</a>
+        </div>
+    </div>
+    <br>
+    <br>
+    <h1 class = "w3-hover-opacity w3-xxlarge">General Online Opinion Detector</h1>
+    <span class = "w3-xsmall">brought to you by GMI</span>
+    <br>
+    <br>
+    <br>
 
     {% if specificTopic %}
     <span class="normalText">Content from: {{ specificTopic }}</span>
     <br>
     <br>
-    <span class="smallText">{{ topicText }}</span>
+    <span class="normalText">{{ topicText }}</span>
     <br>
     <br>
     <span class = "normalText">the sentiment is {{sent}}</span>

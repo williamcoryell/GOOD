@@ -4,11 +4,36 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>GOOD Detector</title>
+    <link rel="stylesheet" href="https://www.w3schools.com/w3css/4/w3.css">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Inconsolata">
     <style>
         body {
             font-family: 'Times New Roman', Times, serif;
             text-align: center;
-            background-color: rgba(41, 170, 209, 0.168);
+            background-color: rgba(196, 196, 196, 0.168);
+        }
+        .rimg
+        {
+            background-image: url("/static/images/vector4.png");
+            background-position: center;
+            background-size: cover;
+
+            width: 250px; height: 250px; margin-top: 1%;
+        }
+        .marginedleft
+        {
+            margin-left:25%;
+        }
+        .marginedright
+        {
+            margin-right:25%;
+        }
+        .bgimg {
+            background-position: 50% 50%;
+
+            background-size: cover;
+            background-image: url("/static/images/3376272.jpg");
+            min-height: 100%;
         }
         .loading {
             font-family: 'Times New Roman', Times, serif;
@@ -46,107 +71,77 @@
     </style>
 </head>
 <body>
-    <h1>GOOD Detector</h1>
-
-    <form id="searchForm">
-        <label>Enter Topic:</label>
-        <input type="text" id="topic" name="topic" required>
-        <br><br>
-        <label>Select Source:</label>
-        <select id="source" name="source">
-            <option value="news">News</option>
-            <option value="twitter">Twitter</option>
-        </select>
-        <br><br>
-        <input type="submit" value="Submit">
-    </form>
-
-    <p class="loading">Fetching articles... Please wait.</p>
-
-    <div class="button-container" id="buttonContainer">
-        <form action="/graph" method="POST">
-            <input type="submit" value="Show Graph">
-        </form>
+    <div class ='w3-row'>
+        <div class = "w3-col s4">
+            <a href = "/" class = "w3-block w3-sans-serif w3-button w3-hover-opacity">home</a>
+        </div>
+        <div class = "w3-col s4">
+            <a href = "https://github.com/williamcoryell/GOOD"class = "w3-block w3-sans-serif w3-button w3-hover-opacity">github</a>
+        </div>
+        <div class="w3-col s4">
+            <a href="#about" class="w3-block w3-sans-serif w3-button w3-hover-opacity">about</a>
+        </div>
+    </div>
     <br>
-        <form action="/sent" method="POST">
-            <input type="submit" value="Show Opinion">
+    <br>
+    <h1 class = "w3-hover-opacity w3-xxlarge">General Online Opinion Detector</h1>
+    <span class = "w3-xsmall">brought to you by GMI</span>
+    <header class = "bgimg w3-display-container w3-padding-64" style="margin-top: 60px;">
+        <br><br><br><br>
+        <div style=" margin-left: 10%; margin-right: 10%; color: whitesmoke;">
+            <div class = " w3-large">
+                <span>a DeBERTa solution to polarization and opinion</span>
+            </div>
+            <div class = "w3-sans-serif w3-large w3-center">
+                <h1 class = "w3-xxlarge">
+                    Find Varied Opinions on Topics Across the Internet
+                </h1>
+            </div>
+        </div>
+        <br><br><br>
+    </header>
+
+    <br><br><br>
+    <div class = "w3-right marginedright rimg"></div>
+
+    <div class = "w3-sans-serif w3-padding-64">
+
+        <form id="searchForm" action="/articles" method="POST">
+            <label class = "w3-left marginedleft">Enter Topic:</label>
+
+            <input class = "w3-left" style = "margin-left: 2%;" type="text" id="topic" name="topic" required>
+
+            <br><br>
+            <label class = "w3-left marginedleft">Select Source:</label>
+            <select class = "w3-left" style = "margin-left: 2%;" id="source" name="source">
+                <option value="news">News</option>
+                <option value="twitter">Twitter</option>
+            </select>
+            <br><br>
+            <input class="w3-button w3-round w3-left marginedleft" style = "background-color: rgba(135, 135, 135, 0.168);" type="submit" value="Submit">
         </form>
     </div>
-
-    <br>
-    <div id="results"></div>
-
-    <!-- Graph and Sentiment Analysis Buttons (Initially Hidden) -->
-    
-
-    <script>
-        function generateRandomColor() {
-            const letters = '0123456789ABCDEF';
-            let color = '#';
-            for (let i = 0; i < 6; i++) {
-                color += letters[Math.floor(Math.random() * 16)];
-            }
-            return color;
-        }
-
-        document.getElementById('searchForm').addEventListener('submit', function(event) {
-            event.preventDefault();
-
-            let topic = document.getElementById('topic').value;
-            let source = document.getElementById('source').value;
-            document.querySelector('.loading').style.display = 'block';
-
-            fetch('/get_urls', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ topic: topic, source: source })
-            })
-            .then(response => response.json())
-            .then(data => {
-                document.querySelector('.loading').style.display = 'none';
-                let resultsDiv = document.getElementById('results');
-                resultsDiv.innerHTML = '';
-
-                if (data.urls.length === 0) {
-                    resultsDiv.innerHTML = '<p>No results found.</p>';
-                    return;
-                }
-
-                data.urls.forEach((url, index) => {
-                    setTimeout(() => {
-                        let div = document.createElement('div');
-                        div.classList.add('border');
-                        div.innerHTML = `
-                            <p><a href="${url}" target="_blank">${url}</a></p>
-                            <form action="/urlInfo" method="POST">
-                                <input type="hidden" name="topicChose" value="${url}">
-                                <input type="submit" value="See Content">
-                            </form>
-                        `;
-                        resultsDiv.appendChild(div);
-                        div.style.display = "block";
-                        div.style.opacity = "0";
-                        setTimeout(() => {
-                            div.style.opacity = "1";
-                            div.style.backgroundColor = generateRandomColor();
-                        }, 10);
-                    }, 0);
-                });
-
-                // Show the buttons after URLs load
-                setTimeout(() => {
-                    document.getElementById('buttonContainer').style.display = 'block';
-                }, 0);
-            });
-        });
-    </script>
-
-    {% if specificTopic %}
-    <span class="normalText">Content from: {{ specificTopic }}</span>
     <br>
     <br>
-    <span class="smallText">{{ topicText }}</span>
-    {% endif %}
-
+    <br><br>
+    <div class = "w3-sans-serif" id="about">
+    </div>
+    <h1 class = 'w3-center'>ABOUT G.O.O.D.</h1>
+    <div class="w3-left" style="display: inline-block; padding-left: 20%; width:50%;">
+        <h1 class = "w3-large">Creators</h1>
+        <span class=" w3-large w3-sans-serif">Ethan Cheung, William Coryell, and Myung Lee. We are seniors from Thomas Jefferson High School for Science and Technology (TJHSST) in Alexandria, Virginia. </span>
+        <br>
+        <img src="/static/images/IMG_1140.jpg" width="30%" height="30%">
+        <img src="/static/images/IMG_0266.jpg" width="30%" height="30%">
+        <img src="/static/images/PXL_20211217_165558629.jpg" width="30%" height="30%">
+    </div>
+    <div class ="w3-right" style="display: inline-block; padding-right: 20%; width:50%;">
+        <h1 class = "w3-large">The Project</h1>
+        <span class=" w3-large w3-sans-serif">This is our senior research project in the Systems Lab at TJHSST. We wanted to tackle the problem of echo chambers in online spaces, which has become more prevalent in recent years. We designed G.O.O.D. to be a tool one could use to see if they are in an echo chamber, by examining many other opinions and perspectives. By seeing other perspectives on issues, you can get a better understanding of issues, rather than having what you already believe reinforced by the news and social media posts you constantly see.</span>
+    </div>
+    <br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br>
+    <footer>
+        <span>hello</span>
+    </footer>
 </body>
 </html>

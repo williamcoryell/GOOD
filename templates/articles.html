@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GOOD Detector</title>
+    <link rel="stylesheet" href="https://www.w3schools.com/w3css/4/w3.css">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Inconsolata">
+    <style>
+        body {
+            font-family: 'Times New Roman', Times, serif;
+            text-align: center;
+            background-color: rgba(196, 196, 196, 0.168);
+        }
+        .loading {
+            font-family: 'Times New Roman', Times, serif;
+            font-size: 18px;
+            color: red;
+            display: none;
+        }
+        .border {
+            font-family: 'Times New Roman', Times, serif;
+            display: none;
+            margin: auto;
+            padding: 10px;
+            border: 2px solid black;
+            background-color: lightgray;
+            transition: opacity 0.5s;
+        }
+        .button-container {
+            margin-top: 20px;
+        }
+        .normalText {
+            font-family: 'Times New Roman', Times, serif;
+            color: black;
+            text-align: center;
+            font-size: medium;
+        }
+
+        .smallText {
+            font-size: small;
+            font-family: 'Times New Roman', Times, serif;
+            text-align: center;
+            color: black;
+        }
+    </style>
+</head>
+<body>
+    <div class ='w3-row'>
+        <div class = "w3-col s3">
+            <a href = "/" class = "w3-block w3-sans-serif w3-button w3-hover-opacity">home</a>
+        </div>
+        <div class = "w3-col s3">
+            <a href = "/long" class = "w3-block w3-sans-serif w3-button w3-hover-opacity">data tracker</a>
+        </div>
+        <div class = "w3-col s3">
+            <a href = "/github"class = "w3-block w3-sans-serif w3-button w3-hover-opacity">github</a>
+        </div>
+        <div class="w3-col s3">
+            <a href="#about" class="w3-block w3-sans-serif w3-button w3-hover-opacity">about</a>
+        </div>
+    </div>
+    <br>
+    <br>
+    <h1 class = "w3-hover-opacity w3-xxlarge">General Online Opinion Detector</h1>
+    <span class = "w3-xsmall">brought to you by GMI</span>
+    <div class="button-container" id="buttonContainer">
+        <form action="/graph" method="POST">
+            <input class = "w3-button w3-round" style = "background-color: rgba(135, 135, 135, 0.168);" type="submit" value="Show Graph">
+        </form>
+    </div>
+    <br>
+    <p class="loading">Fetching articles... Please wait.</p>
+
+
+    <br>
+    <div id="results"></div>
+
+    <!-- Graph and Sentiment Analysis Buttons (Initially Hidden) -->
+    
+
+    <script>
+        for (let i = 1; i < 4; i++)
+        {
+            if ({{urls}}.length != 0)
+            {
+                urls = {{urls}};
+                urls.forEach((url, index) => {
+                setTimeout(() => {
+                    let div = document.createElement('div');
+                    if (titles[index][1] == null)
+                    {
+                        div.innerHTML = 
+                        // <a class = "normalText" href="${url}" target="_blank">${url.slice(url.indexOf("/", url.indexOf("/")+1)+1)}</a>
+                        `<a class = "normalText" href="${url}" target="_blank">${url.slice(url.indexOf("/", url.indexOf("/")+1)+1, url.indexOf("/", url.indexOf("/", url.indexOf("/")+1)+1))}</a>
+                        <form action="/urlInfo" method="POST">
+                            <input type="hidden" name="topicChose" value="${url}">
+                            <input style = "background-color: rgba(165, 165, 165, 0.168);" class = "w3-button w3-round" type="submit" value="See Content">
+                        </form>
+                    `;
+                    }
+                    else
+                    {
+                        div.innerHTML = 
+                        // <a class = "normalText" href="${url}" target="_blank">${url.slice(url.indexOf("/", url.indexOf("/")+1)+1)}</a>
+                        `<a class = "normalText" href="${url}" target="_blank">${url.slice(url.indexOf("/", url.indexOf("/")+1)+1, url.indexOf("/", url.indexOf("/", url.indexOf("/")+1)+1))}</a>
+                        <form action="/urlInfo" method="POST">
+                            <input type="hidden" name="topicChose" value="${url}">
+                            <input style = "background-color: rgba(165, 165, 165, 0.168);" class = "w3-button w3-round" type="submit" value="See Content">
+                        </form>
+                        `;
+                    }
+                    resultsDiv.appendChild(div);
+                    div.style.borderRadius = "10px";
+                    div.style.display = "inline-block";
+                    div.style.opacity = "0";
+                    div.style.fontFamily = "font-family: 'Times New Roman', Times, serif";
+                    div.style.width = "auto"
+                    div.style.padding = "12px"
+                    div.style.margin = "5px"
+                    div.style.height = "auto"
+                    setTimeout(() => {
+                        div.style.opacity = "1";
+                        div.style.backgroundColor = "#dedede";
+                    }, 10);
+                }, 0);
+            });
+            }
+            else{
+                get_next_url(i).then(result => {console.log(i)});
+            }
+        }
+        
+        async function get_next_url(page)
+        {
+            let resultsDiv = document.getElementById('results');
+
+            
+            let bruh = await fetch("/get_urls/" + page + "/{{topic}}/{{source}}");
+            
+            let urls = await bruh.json();
+            let titles = urls["titles"];
+            urls = urls["urls"];
+
+            if (urls.length === 0) {
+                resultsDiv.innerHTML = '<p>No results found.</p>';
+                return;
+            }
+            urls.forEach((url, index) => {
+                setTimeout(() => {
+                    let div = document.createElement('div');
+                    if (titles[index][1] == null)
+                    {
+                        div.innerHTML = 
+                        // <a class = "normalText" href="${url}" target="_blank">${url.slice(url.indexOf("/", url.indexOf("/")+1)+1)}</a>
+                        `<a class = "normalText" href="${url}" target="_blank">${url.slice(url.indexOf("/", url.indexOf("/")+1)+1, url.indexOf("/", url.indexOf("/", url.indexOf("/")+1)+1))}</a>
+                        <p class = "normalText" href="${url}" target="_blank">${titles[index][0]}</p>
+                        <p class = "normalText"> Published Time Unknown</p>
+                        <form action="/urlInfo" method="POST">
+                            <input type="hidden" name="topicChose" value="${url}">
+                            <input style = "background-color: rgba(165, 165, 165, 0.168);" class = "w3-button w3-round" type="submit" value="See Content">
+                        </form>
+                    `;
+                    }
+                    else
+                    {
+                        div.innerHTML = 
+                        // <a class = "normalText" href="${url}" target="_blank">${url.slice(url.indexOf("/", url.indexOf("/")+1)+1)}</a>
+                        `<a class = "normalText" href="${url}" target="_blank">${url.slice(url.indexOf("/", url.indexOf("/")+1)+1, url.indexOf("/", url.indexOf("/", url.indexOf("/")+1)+1))}</a>
+                        <p class = "normalText" href="${url}" target="_blank">${titles[index][0]}</p>
+                        <p class = "normalText"> Published: ${titles[index][1]}</p>
+                        <form action="/urlInfo" method="POST">
+                            <input type="hidden" name="topicChose" value="${url}">
+                            <input style = "background-color: rgba(165, 165, 165, 0.168);" class = "w3-button w3-round" type="submit" value="See Content">
+                        </form>
+                        `;
+                    }
+                    resultsDiv.appendChild(div);
+                    div.style.borderRadius = "10px";
+                    div.style.display = "inline-block";
+                    div.style.opacity = "0";
+                    div.style.fontFamily = "font-family: 'Times New Roman', Times, serif";
+                    div.style.width = "auto"
+                    div.style.padding = "12px"
+                    div.style.margin = "5px"
+                    div.style.height = "auto"
+                    setTimeout(() => {
+                        div.style.opacity = "1";
+                        div.style.backgroundColor = "#dedede";
+                    }, 10);
+                }, 0);
+            });
+        }
+    </script>
+
+
+</body>
+</html>

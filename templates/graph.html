@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Graph Example</title>
+    <title>Sentiment Graph</title>
     <!-- Chart.js Library -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
@@ -27,114 +27,137 @@
     
     <script>
         // Example data for URLs (you need to replace this with actual data)
-        var urls = {{ urls | tojson | safe }};
-        var topic = "{{specificTopic}}";
+        let urls = {{ urls | tojson | safe }};
+        let topic = "{{specificTopic}}";
 
         // Generate random scatter plot data
-        var negativeData = [];
-        var positiveData = [];
+        let negativeData = [{x:-100, y:0, i:-1}];
+        let positiveData = [{x:100, y:0, i:-1}];
+        let myChart = null;
+        let confidenceScore;
         for (let i = 0; i < urls.length; i++) {
-            confidenceScore = Math.random() * 2 -1
+            getSent(i).then(result => {confidenceScore = result;
+            if (myChart != null)
+            {
+                myChart.destroy();
+            }
+            // confidenceScore = .3;
+
             if (confidenceScore < 0){
-                negativeData.push({x:confidenceScore, y: 0})
+                negativeData.push({x:confidenceScore, y: 0, i:i});
             }
             else{
-                positiveData.push({x:confidenceScore, y: 0})
+                positiveData.push({x:confidenceScore, y: 0, i:i});
             }
-            
+            const canvas = document.getElementById("myChart");
+            const ctx = document.getElementById('myChart').getContext("2d");
+            myChart = new Chart(ctx, {
+                type: 'scatter',
+                data: {
+                    datasets: [{
+                        label: 'Negative',
+                        data: negativeData,
+                        backgroundColor: function(context) {
+                            let value = context.raw.x;
+                            return value < 0 ? 'rgba(255, 99, 132, 0.8)' : 'rgba(75, 192, 192, 0.8)';
+                        },
+                        pointRadius: 8,  // Adjust point size
+                        pointHoverRadius: 10,
+                    },{
+                        label: 'Positive',
+                        data: positiveData,
+                        backgroundColor: function(context) {
+                            let value = context.raw.x;
+                            return value < 0 ? 'rgba(255, 99, 132, 0.8)' : 'rgba(75, 192, 192, 0.8)';
+                        },
+                        pointRadius: 8,  // Adjust point size
+                        pointHoverRadius: 10,
+                        yAxisId: 'percentage'
+                    }]
+                }, 
+                options: {
+                    scales: {
+                        x: {
+                            type: 'linear',
+                            position: 'bottom',
+                            min: -1,  
+                            max: 1,   
+                            ticks: {
+                                callback: function(value, index, values) {
+                                    if (value === -1) return '-1';
+                                    if (value === 0) return '0';
+                                    if (value === 1) return '1';
+                                    return '';
+                                },
+                                stepSize: 0.5
+                            },
+                            title: {
+                                display: true,
+                                text: 'Positivity Score',
+                                font: {
+                                    size: 16
+                                }
+                            }
+                        },
+                        y: {  // Hide Y-axis
+                            ticks: { display: false, stepSize: 4},
+                            title: {
+                                display: true,
+                                text: 'Negative'
+                            }
+                        }, 
+                        percentage:{
+                            position: 'right',
+                            ticks: { display: false, stepSize: 4},
+                            title: {
+                                display: true,
+                                text: 'Positive'
+                            }
+                        }
+                    },
+                    responsive: true,
+                    plugins: {
+                        legend: { 
+                            display: true,
+                            position: 'top'
+                            
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return 'Positivity Score: ' + context.raw.x.toFixed(2) + "\nUrl: " + urls[parseInt(context.raw.i.toFixed(2))];
+                                }
+                            }
+                        }
+                        
+                    }
+                }
+            });
+            });
         }
 
-        var ctx = document.getElementById('myChart').getContext('2d');
-        var myChart = new Chart(ctx, {
-            type: 'scatter',
-            data: {
-                datasets: [{
-                    label: 'Negative',
-                    data: negativeData,
-                    backgroundColor: function(context) {
-                        let value = context.raw.x;
-                        return value < 0 ? 'rgba(255, 99, 132, 0.8)' : 'rgba(75, 192, 192, 0.8)';
-                        value = -value
-                    },
-                    pointRadius: 8,  // Adjust point size
-                    pointHoverRadius: 10,
-                },{
-                    label: 'Positive',
-                    data: positiveData,
-                    backgroundColor: function(context) {
-                        let value = context.raw.x;
-                        return value < 0 ? 'rgba(255, 99, 132, 0.8)' : 'rgba(75, 192, 192, 0.8)';
-                    },
-                    pointRadius: 8,  // Adjust point size
-                    pointHoverRadius: 10,
-                    yAxisId: 'percentage'
-                }]
-            }, 
-            options: {
-                scales: {
-                    x: {
-                        type: 'linear',
-                        position: 'bottom',
-                        min: -1,  
-                        max: 1,   
-                        ticks: {
-                            callback: function(value, index, values) {
-                                if (value === -1) return '1';
-                                if (value === 0) return '0';
-                                if (value === 1) return '1';
-                                return '';
-                            },
-                            stepSize: 0.5
-                        },
-                        title: {
-                            display: true,
-                            text: 'Confidence Score',
-                            font: {
-                                size: 16
-                            }
-                        }
-                    },
-                    y: {  // Hide Y-axis
-                        ticks: { display: false, stepSize: 4},
-                        title: {
-                            display: true,
-                            text: 'Negative'
-                        }
-                    }, 
-                    percentage:{
-                        position: 'right',
-                        ticks: { display: false, stepSize: 4},
-                        title: {
-                            display: true,
-                            text: 'Positive'
-                        }
-                    }
-                },
-                responsive: true,
-                plugins: {
-                    legend: { 
-                        display: true,
-                        position: 'top'
-                        
-                    },
-                    tooltip: {
-                        callbacks: {
-                            label: function(context) {
-                                return 'Confidence Score: ' + Math.abs(context.raw.x.toFixed(2));
-                            }
-                        }
-                    }
-                    
-                }
-            }
-        });
+        async function getSent(url)
+        {
+            let bruh = await fetch(`/sentOnWeb/${url}`);
+            
+            let sent = await bruh.json();
+            sent = sent["pluh"];
+            return sent;
+        }
     </script>
 
     <br>
     
     <article>
         <p>
-        Text that explains the axes and graph in general and also sentiment stuff blah blah.
+            This graph compiles the sentiment assessments made by the DeBERTa model for each source.
+            <br>
+            It is structured like a number line, with zero at the center and extending symmetrically to 1 on both ends, 
+            representing the confidence score. This score, ranging from 0 to 1, indicates how confident the model is in 
+            its sentiment classification. Negative sentiment extends to the left, while positive sentiment extends to the 
+            right. The further a point is from zero, the stronger the sentiment, whereas values closer to zero suggest 
+            neutrality or uncertainty. A higher concentration of points on the left indicates more negative sentiment toward 
+            a topic, while more points on the right suggest a greater presence of positive sentiment.
         </p>
     </article>
   
