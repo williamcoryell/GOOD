@@ -3,13 +3,9 @@ import os
 from GoogleNews import GoogleNews
 from newspaper import Article
 import pandas as pd
-from gnews import GNews
 import time
-import numpy as np
-import matplotlib.pyplot as plt
 import asyncio
 from twikit import Client
-import random
 import main as tspmo
 global id2label
 global label2id
@@ -19,42 +15,44 @@ global Model
 Model = tspmo.DeBERTa("checkpoint.config")
 
 
-USERNAME = 'mickey76148'
-PASSWORD = 'twitterScrapingTool'
+USERNAME = 'thingyforsyslab'
+PASSWORD = 'hellomyunglee'
 
 
 topicCHOSEN = ""
 URLS = []
 quickDict  = {}
+titleDict = {}
 
-def get_urls_news(topic):
+def get_urls_news(topic, page):
     global quickDict
+    global titleDict
     start_time = time.time()
     googlenews = GoogleNews()
     googlenews.search(topic)
     lstOfdf = []
-    for i in range(4):
-        result = googlenews.page_at(i)
-        lstOfdf.append(pd.DataFrame(result))
+    result = googlenews.page_at(page)
+    lstOfdf.append(pd.DataFrame(result))
     retLst = []
-    quickDict = {}
+    retLst2 = []
     for df in lstOfdf:
         for i in range(len(df["link"])):
             url = df["link"][i][:df["link"][i].rfind("&ved=")] + "/"
-            if url is None or url in retLst or "nytime" in url:
+            if url is None or url in retLst or "nytime" in url or "msn" in url:
                 continue
             article = Article(url)
             try:
                 article.download()
                 article.parse()
                 quickDict[url] = article.text
-                if url is not None:
+                titleDict[url] = article.title
+                if url is not None and article.is_media_news:
                     retLst.append(url)
-                    print(url)
+                    retLst2.append([article.title, article.publish_date])
             except:
                 article
     print(time.time() - start_time)
-    return retLst
+    return retLst, retLst2
 
 async def get_urls_twitter(topic):
     global quickDict
@@ -80,7 +78,7 @@ app = Flask(__name__)
 def hello_world():
     return render_template("index.html", og=True)
 
-@app.route('/', methods=['POST'])
+@app.route('/articles', methods=['POST'])
 def text():
     global topicCHOSEN
     global URLS
@@ -88,32 +86,33 @@ def text():
     source = request.form['source']
     topicCHOSEN = topic
 
-    if source == "news":
-        urls = get_urls_news(topic)
-    elif source == "twitter":
+    if source == "twitter":
         urls = asyncio.run(get_urls_twitter(topic))
-    else:
-        urls = []
 
-    URLS = urls
-    return render_template("index.html", topic=topic, go=True, urls=urls, source=source)
+    urls = []
+    return render_template("articles.html", topic=topic, go=True, urls=urls, source=source, titles=titleDict)
 
-@app.route('/get_urls', methods=['POST'])
-def fetch_urls():
+@app.route('/get_urls/<page>/<topic>/<source>', methods=['GET'])
+def fetch_urls(page, topic, source):
+    print("get_URLS")
     global quickDict
     global URLS
-    topic = request.json['topic']
-    source = request.json['source']
-    
     if source == "news":
-        urls = get_urls_news(topic)
+        urls, titles = get_urls_news(topic, int(page))
     elif source == "twitter":
         urls = asyncio.run(get_urls_twitter(topic))
     else:
         urls = []
 
-    URLS = urls
-    return jsonify({"urls": urls})  # Send URLs as JSON
+    for i in urls:
+        print(len(quickDict[i]))
+        if len(quickDict[i]) < 200:
+            urls.remove(i)
+            print(i)
+        else:
+            URLS.append(i)
+    # URLS = urls
+    return jsonify({"urls": urls, "titles": titles})  # Send URLs as JSON
 
 @app.route('/urlInfo', methods=['POST'])
 def topic():
@@ -125,7 +124,7 @@ def topic():
 @app.route('/graph', methods=['POST'])
 def graph():
     global URLS   
-    print(URLS)
+    # print(URLS)
     return render_template('graph.html', urls = URLS, specificTopic=topicCHOSEN)
 
 def sentOneArt(text, topic):
@@ -143,7 +142,7 @@ def sentOneArt(text, topic):
         # print(f"addString: {addString}")
         # print(f"retStr: {retStr}")
 
-        if len(addString + retStr) < 250:
+        if len(addString + retStr) < 150:
             addString += " " + retStr
             continue
 
@@ -169,8 +168,16 @@ def sentOneArt(text, topic):
         if abs(guess) > 0.13:
             score += guess
             scoringPara += 1
+    if not scoringPara:
+        return 0
     score /= scoringPara
     return score
+
+@app.route("/sentOnWeb/<urlM>", methods=['GET'])
+def sentOnWeb(urlM):
+    textFor = quickDict[URLS[int(urlM)]]
+    return jsonify({"pluh": sentOneArt(textFor, topicCHOSEN)})
+
 
 
 @app.route('/sent', methods=['POST'])
