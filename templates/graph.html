@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sentiment Graph</title>
+    <link rel="stylesheet" href="https://www.w3schools.com/w3css/4/w3.css">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Inconsolata">
     <!-- Chart.js Library -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
@@ -21,6 +23,14 @@
     </style>
 </head>
 <body>
+    <div class ='w3-row'>
+        <div class = "w3-col s4">
+            <a href = "/" class = "w3-block w3-sans-serif w3-button w3-hover-opacity">home</a>
+        </div>
+        <div class = "w3-col s4">
+            <a href = "https://github.com/williamcoryell/GOOD"class = "w3-block w3-sans-serif w3-button w3-hover-opacity">github</a>
+        </div>
+    </div>
     <div style="width: 50%; margin: auto;">
         <canvas id="myChart" width="400" height="200"></canvas>
     </div>
@@ -142,6 +152,15 @@
             
             let sent = await bruh.json();
             sent = sent["pluh"];
+            while (sent == "not yet")
+            {
+                await new Promise(r => setTimeout(r, 2000));
+                let bruh = await fetch(`/sentOnWeb/${url}`);
+            
+                sent = await bruh.json();
+                sent = sent["pluh"];
+                // console.log(sent);
+            }
             return sent;
         }
     </script>

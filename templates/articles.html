@@ -16,7 +16,6 @@
             font-family: 'Times New Roman', Times, serif;
             font-size: 18px;
             color: red;
-            display: none;
         }
         .border {
             font-family: 'Times New Roman', Times, serif;
@@ -47,30 +46,23 @@
 </head>
 <body>
     <div class ='w3-row'>
-        <div class = "w3-col s3">
+        <div class = "w3-col s4">
             <a href = "/" class = "w3-block w3-sans-serif w3-button w3-hover-opacity">home</a>
         </div>
-        <div class = "w3-col s3">
-            <a href = "/long" class = "w3-block w3-sans-serif w3-button w3-hover-opacity">data tracker</a>
+        <div class = "w3-col s4">
+            <a href = "https://github.com/williamcoryell/GOOD"class = "w3-block w3-sans-serif w3-button w3-hover-opacity">github</a>
         </div>
-        <div class = "w3-col s3">
-            <a href = "/github"class = "w3-block w3-sans-serif w3-button w3-hover-opacity">github</a>
-        </div>
-        <div class="w3-col s3">
-            <a href="#about" class="w3-block w3-sans-serif w3-button w3-hover-opacity">about</a>
+        <div class="w3-col s4">
+            <a href="/" class="w3-block w3-sans-serif w3-button w3-hover-opacity">about</a>
         </div>
     </div>
     <br>
     <br>
     <h1 class = "w3-hover-opacity w3-xxlarge">General Online Opinion Detector</h1>
     <span class = "w3-xsmall">brought to you by GMI</span>
-    <div class="button-container" id="buttonContainer">
-        <form action="/graph" method="POST">
-            <input class = "w3-button w3-round" style = "background-color: rgba(135, 135, 135, 0.168);" type="submit" value="Show Graph">
-        </form>
-    </div>
+    <div id = "insertHere"></div>
     <br>
-    <p class="loading">Fetching articles... Please wait.</p>
+    <p id="loading">Fetching articles... Please wait.</p>
 
 
     <br>
@@ -80,36 +72,65 @@
     
 
     <script>
-        for (let i = 1; i < 4; i++)
+        let pageNum = 3;
+        let areTheyFinished = 0;
+        async function loopy()
         {
-            if ({{urls}}.length != 0)
+            let newsBool = "{{newsBool}}";
+            if (newsBool == "False")
             {
-                urls = {{urls}};
-                urls.forEach((url, index) => {
+                for (let i = 1; i < pageNum+1; i++)
+                {
+                    get_twitter(i).then(result => {console.log(i)});
+                }
+            }
+            else
+            {
+                for (let i = 1; i < pageNum+1; i++)
+                {
+                    get_next_url(i).then(result => {console.log(i)});
+                }
+            }
+            return Promise.resolve();
+        }
+        async function mainLoop()
+        {
+            console.log(await loopy())
+            while (areTheyFinished < pageNum)
+            {
+                await new Promise(r => setTimeout(r, 2000));
+                console.log(areTheyFinished);
+            }
+            let myDiv = document.getElementById("insertHere");
+            myDiv.innerHTML = `
+                <div class="button-container" id="buttonContainer">
+                    <form action="/graph" method="POST">
+                        <input class = "w3-button w3-round" style = "background-color: rgba(135, 135, 135, 0.168);" type="submit" value="Show Graph">
+                    </form>
+                </div>
+            `
+            let otherDiv = document.getElementById("loading");
+            otherDiv.innerHTML = "";
+            let sd = fetch("/startSent");
+        }
+        async function get_twitter(page)
+        {
+            let resultsDiv = document.getElementById('results');
+            let bruh = await fetch(`/get_urls/${page}/{{topic}}/{{source}}`);
+        
+            let urls = await bruh.json();
+            urls = urls["urls"];
+            urls.forEach((url, index) => {
                 setTimeout(() => {
                     let div = document.createElement('div');
-                    if (titles[index][1] == null)
-                    {
-                        div.innerHTML = 
+                    div.innerHTML = 
                         // <a class = "normalText" href="${url}" target="_blank">${url.slice(url.indexOf("/", url.indexOf("/")+1)+1)}</a>
-                        `<a class = "normalText" href="${url}" target="_blank">${url.slice(url.indexOf("/", url.indexOf("/")+1)+1, url.indexOf("/", url.indexOf("/", url.indexOf("/")+1)+1))}</a>
+                        `<a class = "normalText" href="${url}" target="_blank">${url}</a>
                         <form action="/urlInfo" method="POST">
                             <input type="hidden" name="topicChose" value="${url}">
                             <input style = "background-color: rgba(165, 165, 165, 0.168);" class = "w3-button w3-round" type="submit" value="See Content">
                         </form>
                     `;
-                    }
-                    else
-                    {
-                        div.innerHTML = 
-                        // <a class = "normalText" href="${url}" target="_blank">${url.slice(url.indexOf("/", url.indexOf("/")+1)+1)}</a>
-                        `<a class = "normalText" href="${url}" target="_blank">${url.slice(url.indexOf("/", url.indexOf("/")+1)+1, url.indexOf("/", url.indexOf("/", url.indexOf("/")+1)+1))}</a>
-                        <form action="/urlInfo" method="POST">
-                            <input type="hidden" name="topicChose" value="${url}">
-                            <input style = "background-color: rgba(165, 165, 165, 0.168);" class = "w3-button w3-round" type="submit" value="See Content">
-                        </form>
-                        `;
-                    }
                     resultsDiv.appendChild(div);
                     div.style.borderRadius = "10px";
                     div.style.display = "inline-block";
@@ -125,17 +146,12 @@
                     }, 10);
                 }, 0);
             });
-            }
-            else{
-                get_next_url(i).then(result => {console.log(i)});
-            }
+            areTheyFinished += 1;
         }
-        
         async function get_next_url(page)
         {
             let resultsDiv = document.getElementById('results');
 
-            
             let bruh = await fetch("/get_urls/" + page + "/{{topic}}/{{source}}");
             
             let urls = await bruh.json();
@@ -190,7 +206,9 @@
                     }, 10);
                 }, 0);
             });
+            areTheyFinished += 1;
         }
+        mainLoop();
     </script>
 
 

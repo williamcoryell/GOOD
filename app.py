@@ -7,15 +7,17 @@ import time
 import asyncio
 from twikit import Client
 import main as tspmo
+import threading
 global id2label
 global label2id
 id2label = {0: "negative", 1: "positive"}
 label2id = {"negative": 0, "positive": 1}
 global Model
+global sentDict
 Model = tspmo.DeBERTa("checkpoint.config")
 
 
-USERNAME = 'thingyforsyslab'
+USERNAME = 'thingforsys3'
 PASSWORD = 'hellomyunglee'
 
 
@@ -23,6 +25,7 @@ topicCHOSEN = ""
 URLS = []
 quickDict  = {}
 titleDict = {}
+sentDict = {}
 
 def get_urls_news(topic, page):
     global quickDict
@@ -85,12 +88,8 @@ def text():
     topic = request.form['topic']
     source = request.form['source']
     topicCHOSEN = topic
-
-    if source == "twitter":
-        urls = asyncio.run(get_urls_twitter(topic))
-
-    urls = []
-    return render_template("articles.html", topic=topic, go=True, urls=urls, source=source, titles=titleDict)
+    
+    return render_template("articles.html", topic=topic, source=source, titles=titleDict, newsBool = source=='News/Long Text Model')
 
 @app.route('/get_urls/<page>/<topic>/<source>', methods=['GET'])
 def fetch_urls(page, topic, source):
@@ -99,20 +98,33 @@ def fetch_urls(page, topic, source):
     global URLS
     if source == "news":
         urls, titles = get_urls_news(topic, int(page))
-    elif source == "twitter":
+        for i in urls:
+            if len(quickDict[i]) < 200:
+                urls.remove(i)
+            else:
+                URLS.append(i)
+        # URLS = urls
+        return jsonify({"urls": urls, "titles": titles})  # Send URLs as JSON
+    if source == "twitter":
         urls = asyncio.run(get_urls_twitter(topic))
-    else:
-        urls = []
+        print(urls)
+        for i in urls:
+            if i not in URLS:
+                URLS.append(i)
+            else:
+                urls.remove(i)
+        return jsonify({"urls": urls})
+@app.route("/startSent")
+def startSent():
+    threader = threading.Thread(target=startSentThread)
+    threader.start()
+    return jsonify({'pluh': "pluh"})
 
-    for i in urls:
-        print(len(quickDict[i]))
-        if len(quickDict[i]) < 200:
-            urls.remove(i)
-            print(i)
-        else:
-            URLS.append(i)
-    # URLS = urls
-    return jsonify({"urls": urls, "titles": titles})  # Send URLs as JSON
+def startSentThread():
+    global sentDict
+    for urlM in URLS:
+        textFor = quickDict[urlM]
+        sentDict[urlM] = sentOneArt(textFor, topicCHOSEN)
 
 @app.route('/urlInfo', methods=['POST'])
 def topic():
@@ -129,7 +141,8 @@ def graph():
 
 def sentOneArt(text, topic):
     artCont = text
-    print(artCont)
+    # print(artCont)
+    print(text[:50] + "...")
     para = artCont.split("\n")
     score = 0
     addString = ""
@@ -153,18 +166,18 @@ def sentOneArt(text, topic):
 
         addString = ""
         guess = Model.predict(retStr, topic)["totalScore"]
-        print(len(retStr))
-        print(retStr)
-        print(guess)
+        # print(len(retStr))
+        # print(retStr)
+        # print(guess)
         if abs(guess) > 0.13:
             score += guess
             scoringPara += 1
     if addString:
         retStr = addString + " " + retStr
         guess = Model.predict(retStr, topic)["totalScore"]
-        print(len(retStr))
-        print(retStr)
-        print(guess)
+        # print(len(retStr))
+        # print(retStr)
+        # print(guess)
         if abs(guess) > 0.13:
             score += guess
             scoringPara += 1
@@ -175,19 +188,13 @@ def sentOneArt(text, topic):
 
 @app.route("/sentOnWeb/<urlM>", methods=['GET'])
 def sentOnWeb(urlM):
-    textFor = quickDict[URLS[int(urlM)]]
-    return jsonify({"pluh": sentOneArt(textFor, topicCHOSEN)})
-
-
-
-@app.route('/sent', methods=['POST'])
-def sentiment():
-    global URLS, topicCHOSEN, quickDict
-    urls = URLS
-    topic = topicCHOSEN
-    for i in urls:
-        print(sentOneArt(quickDict[i], topic))
-    return render_template("sent.html", urls = urls)
+    print(urlM)
+    print(URLS[int(urlM)])
+    if URLS[int(urlM)] in sentDict:
+        print(sentDict[URLS[int(urlM)]])
+        return jsonify({"pluh": sentDict[URLS[int(urlM)]]})
+    else:
+        return jsonify({'pluh': "not yet"})
 
 if __name__ == "__main__":
     app.run(host='0.0.0.0', port=80)
