@@ -4,6 +4,7 @@ With the variety of opinions on the internet, it can be extremely tedious and he
 ## Directory Structure
 
 The repository is organized as follows:
+```bash
 GOOD/
 ├── BERT_testing/ # Scripts and notebooks related to BERT model testing
 ├── data/ # Contains datasets and data-related scripts
@@ -20,7 +21,7 @@ GOOD/
 ├── instr.py # Script containing instructions or helper functions
 ├── main.py # Entry point for data processing and analysis
 ├── my_list.json # JSON file containing a list of topics or data
-
+```
 
 ---
 
