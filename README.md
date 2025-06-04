@@ -43,10 +43,12 @@ source venv/bin/activate  # On Windows: venv\Scripts\activate
 ```
 
 3. Install Dependencies
+
 Ensure you have pip installed, then run:
 ```bash
 pip install -r requirements.txt
 ```
+If requirements.txt is not present, manually install needed packages such as Flask, transformers, torch, etc.
 
 4. Download or Prepare Data
 Make sure data.pkl and my_list.json are in the root directory. If not, generate or obtain these files according to project needs.
